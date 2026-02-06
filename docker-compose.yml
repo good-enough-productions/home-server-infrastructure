@@ -1,0 +1,73 @@
+services:
+  # Ollama - The AI Brain
+  # Access at http://<server-ip>:11434
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    # Uncomment the following section if you have an NVIDIA GPU passed through to the VM
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # n8n - The Automation Engine
+  # Access at http://<server-ip>:5678
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:1.119.0
+    container_name: n8n
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=192.168.86.38
+      - N8N_PORT=5678
+      - N8N_LISTEN_ADDRESS=0.0.0.0
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://192.168.86.38:5678/
+      - N8N_EDITOR_BASE_URL=http://192.168.86.38:5678/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE:-America/Chicago}
+      - N8N_SECURE_COOKIE=false
+      - N8N_PUSH_BACKEND=websocket
+      - N8N_RUNNERS_ENABLED=true
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  # Uptime Kuma - Monitoring Station
+  # Access at http://<server-ip>:3001
+  uptime-kuma:
+    image: louislam/uptime-kuma:1
+    container_name: uptime-kuma
+    volumes:
+      - uptime-kuma-data:/app/data
+    ports:
+      - "3001:3001"
+    restart: always
+
+  # Mosquitto - MQTT Broker (IoT)
+  # Ports: 1883 (MQTT), 9001 (Websockets)
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_config:/mosquitto/config
+    restart: always
+
+volumes:
+  ollama_data:
+  n8n_data:
+  uptime-kuma-data:
+  mosquitto_data:
+  mosquitto_config:
